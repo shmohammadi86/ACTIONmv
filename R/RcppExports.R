@@ -5,7 +5,3 @@ run_ACTION_muV <- function(S, k_min, k_max, alpha, lambda = 1, AA_iters = 50L, O
     .Call(`_ACTIONmv_run_ACTION_muV`, S, k_min, k_max, alpha, lambda, AA_iters, Opt_iters, numThreads)
 }
 
-run_test <- function(H1, H2) {
-    .Call(`_ACTIONmv_run_test`, H1, H2)
-}
-

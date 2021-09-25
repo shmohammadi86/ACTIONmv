@@ -1,4 +1,4 @@
-#include "action_muv.h"
+#include "ACTIONmv.h"
 
 
 
@@ -510,7 +510,7 @@ full_trace runACTION_muV(vector<mat> S_r, int k_min, int k_max, vec alpha, doubl
 			run_trace.indiv_trace[kk].C_consensus[i] = zeros(cell_no, kk);
 			for(int j = 0; j < kk; j++) {
 				vec w = W.col(j);
-				vec h = H.row(j);
+				vec h = trans(H.row(j));
 
 				double norm_sq = arma::dot(h, h);
 				if (norm_sq < double(10e-8))
@@ -542,7 +542,7 @@ full_trace runACTION_muV(vector<mat> S_r, int k_min, int k_max, vec alpha, doubl
 				  W.col(j) = w_new;
 				}				
 
-				run_trace.indiv_trace[kk].C_consensus[j].col(j) = C.col(j);
+				run_trace.indiv_trace[kk].C_consensus[i].col(j) = C.col(j);
 			}		
 		}			
 		

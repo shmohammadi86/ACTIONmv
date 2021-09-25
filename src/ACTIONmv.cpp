@@ -1,4 +1,4 @@
-#include <action_muv.h>
+#include <ACTIONmv.h>
 #include <RcppArmadillo.h>
 
 #ifdef _OPENMP
@@ -65,31 +65,10 @@ List run_ACTION_muV(const List& S, int k_min, int k_max, vec alpha, double lambd
 		}
 		individual_trace["C_consensus"] = C_consensus;		
 	
-		sprintf(ds_name, "View%d_trace", i);
+		sprintf(ds_name, "View%d_trace", i+1);
 		res[ds_name] = individual_trace;
 	}
 	
 		
-	return res;	
-}
-
-
-// [[Rcpp::depends(RcppArmadillo)]]
-// [[Rcpp::export]]
-List run_test(mat H1, mat H2) {
-
-	mat S = cor(trans(H1), trans(H2));
-	S.transform( [](double val) { return (val < 0? 0:val); } );
-	
-	mat M = MWM(S);
-	umat sub = ind2sub( size(M), find(M) );
-	uvec perm = trans(sub.row(1));	
-	mat H_perm = H2.rows(perm);
-	
-	List res(3);
-	res["ii"] = sub.row(0);
-	res["jj"] = sub.row(1);
-	res["H_perm"] = H_perm;
-	
 	return res;	
 }
