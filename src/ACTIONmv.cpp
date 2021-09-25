@@ -15,7 +15,7 @@ mat MWM(mat G);
 
 // [[Rcpp::depends(RcppArmadillo)]]
 // [[Rcpp::export]]
-List run_ACTION_muV(const List& S, int k_min, int k_max, vec alpha, double lambda = 1, int AA_iters = 50, int Opt_iters= 100, int numThreads = 8) {
+List run_ACTION_muV(const List& S, int k_min, int k_max, vec alpha, double lambda = 1, int AA_iters = 50, int Opt_iters= 0) {
 		
 	int n_list = S.size();	
 	vector<mat> cell_signatures(n_list);
@@ -24,7 +24,7 @@ List run_ACTION_muV(const List& S, int k_min, int k_max, vec alpha, double lambd
 	}
 	
 	
-	full_trace run_trace = runACTION_muV(cell_signatures, k_min, k_max, alpha, lambda, AA_iters, Opt_iters, numThreads);
+	full_trace run_trace = runACTION_muV(cell_signatures, k_min, k_max, alpha, lambda, AA_iters, Opt_iters);
 	
 	
 	List res;

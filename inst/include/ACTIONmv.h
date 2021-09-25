@@ -62,7 +62,7 @@ struct full_trace {
 	
 };
 
-full_trace runACTION_muV(vector<mat> cell_signatures, int k_min, int k_max, vec alpha, double lambda, int AA_iters, int Opt_iters, int numThreads);
+full_trace runACTION_muV(vector<mat> cell_signatures, int k_min, int k_max, vec alpha, double lambda = 1, int AA_iters = 50, int Opt_iters = 0);
 field<mat> run_AA(mat &A, mat &W0, int max_it = 100, double min_delta = 1e-6);
 
 

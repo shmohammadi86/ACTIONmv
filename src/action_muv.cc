@@ -345,7 +345,7 @@ void findConsensus(vector<mat> S, full_trace &run_trace, int arch_no, vec alpha,
 	alpha.transform( [](double val) { return (max(0.0, val)); } );
 	alpha = normalise(alpha, 1); 
 	
-	
+	//printf("Permute archetypes")
 	run_trace.indiv_trace[arch_no].C_secondary[0] = run_trace.indiv_trace[arch_no].C_primary[0]; 
 	run_trace.indiv_trace[arch_no].H_secondary[0] = run_trace.indiv_trace[arch_no].H_primary[0]; 
 	for(int ds = 1; ds < ds_no; ds++) {		
@@ -435,7 +435,7 @@ void findConsensus(vector<mat> S, full_trace &run_trace, int arch_no, vec alpha,
 	}
 }
 
-full_trace runACTION_muV(vector<mat> S_r, int k_min, int k_max, vec alpha, double lambda, int AA_iters = 50, int Opt_iters= 0, int numThreads = 8) {
+full_trace runACTION_muV(vector<mat> S_r, int k_min, int k_max, vec alpha, double lambda, int AA_iters, int Opt_iters) {
 	register int i, kk;
 	printf("Running ACTION\n");
 

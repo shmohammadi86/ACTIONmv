@@ -13,8 +13,8 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // run_ACTION_muV
-List run_ACTION_muV(const List& S, int k_min, int k_max, vec alpha, double lambda, int AA_iters, int Opt_iters, int numThreads);
-RcppExport SEXP _ACTIONmv_run_ACTION_muV(SEXP SSEXP, SEXP k_minSEXP, SEXP k_maxSEXP, SEXP alphaSEXP, SEXP lambdaSEXP, SEXP AA_itersSEXP, SEXP Opt_itersSEXP, SEXP numThreadsSEXP) {
+List run_ACTION_muV(const List& S, int k_min, int k_max, vec alpha, double lambda, int AA_iters, int Opt_iters);
+RcppExport SEXP _ACTIONmv_run_ACTION_muV(SEXP SSEXP, SEXP k_minSEXP, SEXP k_maxSEXP, SEXP alphaSEXP, SEXP lambdaSEXP, SEXP AA_itersSEXP, SEXP Opt_itersSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -25,14 +25,13 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type lambda(lambdaSEXP);
     Rcpp::traits::input_parameter< int >::type AA_iters(AA_itersSEXP);
     Rcpp::traits::input_parameter< int >::type Opt_iters(Opt_itersSEXP);
-    Rcpp::traits::input_parameter< int >::type numThreads(numThreadsSEXP);
-    rcpp_result_gen = Rcpp::wrap(run_ACTION_muV(S, k_min, k_max, alpha, lambda, AA_iters, Opt_iters, numThreads));
+    rcpp_result_gen = Rcpp::wrap(run_ACTION_muV(S, k_min, k_max, alpha, lambda, AA_iters, Opt_iters));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_ACTIONmv_run_ACTION_muV", (DL_FUNC) &_ACTIONmv_run_ACTION_muV, 8},
+    {"_ACTIONmv_run_ACTION_muV", (DL_FUNC) &_ACTIONmv_run_ACTION_muV, 7},
     {NULL, NULL, 0}
 };
 
