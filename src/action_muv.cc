@@ -1,11 +1,82 @@
 #include "ACTIONmv.h"
 
+#define SYS_THREADS_DEF (std::thread::hardware_concurrency() - 2)
+
+
+template <class Function>
+inline void ParallelFor(size_t start, size_t end, size_t thread_no,
+                        Function fn)
+{
+  if (thread_no <= 0)
+  {
+    thread_no = SYS_THREADS_DEF;
+  }
+  
+  if (thread_no == 1)
+  {
+    for (size_t id = start; id < end; id++)
+    {
+      fn(id, 0);
+    }
+  }
+  else
+  {
+    std::vector<std::thread> threads;
+    std::atomic<size_t> current(start);
+    
+    // keep track of exceptions in threads
+    // https://stackoverflow.com/a/32428427/1713196
+    std::exception_ptr lastException = nullptr;
+    std::mutex lastExceptMutex;
+    
+    for (size_t threadId = 0; threadId < thread_no; ++threadId)
+    {
+      threads.push_back(std::thread([&, threadId]
+      {
+        while (true)
+        {
+          size_t id = current.fetch_add(1);
+          
+          if ((id >= end))
+          {
+            break;
+          }
+          
+          try
+          {
+            fn(id, threadId);
+          }
+          catch (...)
+          {
+            std::unique_lock<std::mutex> lastExcepLock(lastExceptMutex);
+            lastException = std::current_exception();
+            /*
+             * This will work even when current is the largest value that
+             * size_t can fit, because fetch_add returns the previous value
+             * before the increment (what will result in overflow
+             * and produce 0 instead of current + 1).
+             */
+            current = end;
+            break;
+          }
+        }
+      }));
+    }
+    for (auto &thread : threads)
+    {
+      thread.join();
+    }
+    if (lastException)
+    {
+      std::rethrow_exception(lastException);
+    }
+  }
+}
 
 
 double *l1, *l2, *w;	
 int *match1, *match2, *v1, *v2;	
 int *s, *tt, *deg, *offset, *my_list;
-
 
 /**
  * n the number of nodes
@@ -196,8 +267,10 @@ mat MWM(mat G) {
 	return G_matched;
 }
 
-  field<mat> run_AA(mat &A, mat &W0, int max_it, double min_delta)
+  field<mat> run_AA(mat &A, mat &W0, int max_it)
   {
+    double min_delta = 1e-6;
+    
     int sample_no = A.n_cols;
     int d = A.n_rows;  // input dimension
     int k = W0.n_cols; // AA components
@@ -332,8 +405,8 @@ uvec SPA(mat M, int k) {
 /* alpha: sums to one and indicates relative importance of each view
  * 
  */
-void findConsensus(vector<mat> S, full_trace &run_trace, int arch_no, vec alpha, double lambda, int max_it, double lambda2 = 1e-5, double epsilon = 1e-5) {
-	printf("Find shared subspace\n");
+void findConsensus(vector<mat> S, full_trace &run_trace, int arch_no, vec alpha, double lambda, int max_it, int) {
+	//printf("Find shared subspace\n");
 	
 	register int i;
 	int ds_no = run_trace.indiv_trace[arch_no].H_primary.size(); // number of datasets ( ~ 2)	
@@ -435,8 +508,7 @@ void findConsensus(vector<mat> S, full_trace &run_trace, int arch_no, vec alpha,
 	}
 }
 
-full_trace runACTION_muV(vector<mat> S_r, int k_min, int k_max, vec alpha, double lambda, int AA_iters, int Opt_iters) {
-	register int i, kk;
+full_trace runACTION_muV(vector<mat> S_r, int k_min, int k_max, vec alpha, double lambda, int AA_iters, int Opt_iters, int thread_no) {
 	printf("Running ACTION\n");
 
 	double lambda2 = 1e-5, epsilon = 1e-5;
@@ -451,7 +523,7 @@ full_trace runACTION_muV(vector<mat> S_r, int k_min, int k_max, vec alpha, doubl
 	full_trace run_trace;		
 	run_trace.H_consensus.resize(k_max+1);
 	run_trace.indiv_trace.resize(k_max+1);
-	for (kk = 0; kk <= k_max; kk++) {
+	for (int kk = 0; kk <= k_max; kk++) {
 		run_trace.indiv_trace[kk].selected_cols.resize(S_r.size());		
 		run_trace.indiv_trace[kk].H_primary.resize(S_r.size());
 		run_trace.indiv_trace[kk].C_primary.resize(S_r.size());
@@ -463,23 +535,30 @@ full_trace runACTION_muV(vector<mat> S_r, int k_min, int k_max, vec alpha, doubl
 
 		
 	// Normalize signature profiles
-	for(i = 0; i < S_r.size(); i++) {
+	for(int i = 0; i < S_r.size(); i++) {
 		S_r[i] = normalise(S_r[i], 1, 0); // norm-1 normalize across columns -- particularly important for SPA
 	}	
 	
+	
 	field<mat> AA_res(2,1);	
-	for(int kk = k_min; kk <= k_max; kk++) {
-		printf("K = %d\n", kk);
+	int current_k = 0;
+	char status_msg[50];
+	sprintf(status_msg, "Iterating from k = %d ... %d:", k_min, k_max);
+	
+	ParallelFor(k_min, k_max + 1, thread_no, [&](size_t kk, size_t threadId) {
+	//for(int kk = k_min; kk <= k_max; kk++) {
+		//printf("K = %d\n", kk);
+	  
 		// Solve ACTION for a fixed-k to "jump-start" the joint optimization problem.
-		for(i = 0; i < S_r.size(); i++) {
-			printf("\tRun ACTION for dataset %d/%d\n", i+1, S_r.size());
+		for(int i = 0; i < S_r.size(); i++) {
+			//printf("\tRun ACTION for dataset %d/%d\n", i+1, S_r.size());
 			
 			run_trace.indiv_trace[kk].selected_cols[i] = SPA(S_r[i], kk);
 			
 			mat W = S_r[i].cols(run_trace.indiv_trace[kk].selected_cols[i]);
 			
 			//AA_res = AA(X_r, W);
-			AA_res = run_AA(S_r[i], W);		
+			AA_res = run_AA(S_r[i], W, AA_iters);		
 			
 			mat C0 = AA_res(0);
 			C0.transform( [](double val) { return (min(1.0, max(0.0, val))); } );
@@ -492,14 +571,22 @@ full_trace runACTION_muV(vector<mat> S_r, int k_min, int k_max, vec alpha, doubl
 			H0 = normalise(H0, 1);	
 			run_trace.indiv_trace[kk].H_primary[i] = H0;
 		}
-
+		current_k++;
+		
+		printf("\r\t%s %d/%d finished", status_msg, current_k,
+         (k_max - k_min + 1));
+		fflush(stdout);	
+                  
+		if(threadId == 0) {
+		  printf("\nComputing consensus\n"); fflush(stdout);
+		}
 		
 		// Compute consensus latent subspace, H^*
-		findConsensus(S_r, run_trace, kk, alpha, lambda, Opt_iters); // sets secondary and consensus objects
+		findConsensus(S_r, run_trace, kk, alpha, lambda, Opt_iters, thread_no); // sets secondary and consensus objects
 
 		
 		// decouple to find individual consensus C matrices
-		for(i = 0; i < S_r.size(); i++) {	
+		for(int i = 0; i < S_r.size(); i++) {	
 			mat S = S_r[i];
 			mat C = run_trace.indiv_trace[kk].C_secondary[i];
 			mat H = run_trace.indiv_trace[kk].H_secondary[i];
@@ -544,9 +631,9 @@ full_trace runACTION_muV(vector<mat> S_r, int k_min, int k_max, vec alpha, doubl
 
 				run_trace.indiv_trace[kk].C_consensus[i].col(j) = C.col(j);
 			}		
+		 
 		}			
-		
-	}	
+	});
 
 	return run_trace;
 }

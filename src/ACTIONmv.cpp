@@ -1,21 +1,14 @@
 #include <ACTIONmv.h>
 #include <RcppArmadillo.h>
 
-#ifdef _OPENMP
-#include <omp.h>
-#endif
-// [[Rcpp::plugins(openmp)]]
-
 using namespace Rcpp;
 using namespace arma;
 
 #define ARMA_USE_CXX11_RNG
 
-mat MWM(mat G);
-
 // [[Rcpp::depends(RcppArmadillo)]]
 // [[Rcpp::export]]
-List run_ACTION_muV(const List& S, int k_min, int k_max, vec alpha, double lambda = 1, int AA_iters = 50, int Opt_iters= 0) {
+List run_ACTION_muV(const List& S, int k_min, int k_max, vec alpha, double lambda = 1, int AA_iters = 50, int Opt_iters= 0, int thread_no = 0) {
 		
 	int n_list = S.size();	
 	vector<mat> cell_signatures(n_list);
@@ -24,7 +17,7 @@ List run_ACTION_muV(const List& S, int k_min, int k_max, vec alpha, double lambd
 	}
 	
 	
-	full_trace run_trace = runACTION_muV(cell_signatures, k_min, k_max, alpha, lambda, AA_iters, Opt_iters);
+	full_trace run_trace = runACTION_muV(cell_signatures, k_min, k_max, alpha, lambda, AA_iters, Opt_iters, thread_no);
 	
 	
 	List res;
@@ -72,3 +65,5 @@ List run_ACTION_muV(const List& S, int k_min, int k_max, vec alpha, double lambd
 		
 	return res;	
 }
+
+

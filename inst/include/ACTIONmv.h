@@ -20,6 +20,8 @@
 #include <algorithm>
 #include <unordered_map>
 #include <ctime>
+#include <thread>
+
 
 #define ARMA_DONT_USE_WRAPPER
 #undef ARMA_BLAS_CAPITALS
@@ -62,8 +64,7 @@ struct full_trace {
 	
 };
 
-full_trace runACTION_muV(vector<mat> cell_signatures, int k_min, int k_max, vec alpha, double lambda = 1, int AA_iters = 50, int Opt_iters = 0);
-field<mat> run_AA(mat &A, mat &W0, int max_it = 100, double min_delta = 1e-6);
+full_trace runACTION_muV(vector<mat> cell_signatures, int k_min, int k_max, vec alpha, double lambda = 1, int AA_iters = 50, int Opt_iters = 0, int thread_no = 0);
 
 
 #endif
