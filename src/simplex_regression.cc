@@ -59,7 +59,9 @@ vec activeSet_arma(arma::mat& M, arma::vec& b, double lambda2 = double(1e-5),
   cblas_dcopy(m, pr_M, 1, pr_MRed, 1);
 
   // BLAS GRed = MRedT * MRed + lam2sq (na = 1 for now)
-  double coeff = cblas_ddot(m, pr_MRed, 1, pr_MRed, 1) + lam2sq;
+  double coeff = dot(MRed, MRed) + lam2sq;
+  //double coeff = cblas_ddot(m, pr_MRed, 1, pr_MRed, 1) + lam2sq;
+  
   GRed(0, 0) = coeff;
   GRedinv(0, 0) = double(1.0) / GRed(0, 0);
 
@@ -161,13 +163,17 @@ vec activeSet_arma(arma::mat& M, arma::vec& b, double lambda2 = double(1e-5),
         cblas_dgemv(CblasColMajor, CblasTrans, m, na, double(1.0), pr_MRed, m,
                     pr_M + indexMin * m, 1, double(), pr_UB, 1);
         // BLAS UC = M[:,indexMin].double* M[:, indexMin]
-        double UC =
-            cblas_ddot(m, pr_M + indexMin * m, 1, pr_M + indexMin * m, 1) +
-            lam2sq;
+        //double UC = cblas_ddot(m, pr_M + indexMin * m, 1, pr_M + indexMin * m, 1) + lam2sq;
+        vec Mv = M.col(indexMin);
+        double UC = dot(Mv, Mv) + lam2sq;
+            
         // BLAS UAiB = GRedinv * UB
         cblas_dsymv(CblasColMajor, CblasUpper, na, double(1.0), pr_GRedinv, L,
                     pr_UB, 1, double(), pr_UAiB, 1);
-        double USi = double(1.0) / (UC - cblas_ddot(na, pr_UB, 1, pr_UAiB, 1));
+        
+        //double xx = cblas_ddot(na, pr_UB, 1, pr_UAiB, 1);
+        double xx = dot(UB, UAiB);        
+        double USi = double(1.0) / (UC - xx);
         // GRedinv (restricted) += USi * UAiB*UAiB
         // replace cblas_syr(CblasColMajor,CblasUpper,na,USi, pr_UAiB, 1,
         // pr_GRedinv, L);
@@ -309,7 +315,8 @@ vec activeSetS_arma(arma::mat& M, arma::vec& b, arma::mat& G,
   cblas_dcopy(m, pr_M, 1, pr_MRed, 1);
 
   // BLAS GRed = MRedT * MRed + lam2sq (na = 1 for now)
-  double coeff = cblas_ddot(m, pr_MRed, 1, pr_MRed, 1) + lam2sq;
+  //double coeff = cblas_ddot(m, pr_MRed, 1, pr_MRed, 1) + lam2sq;
+  double coeff = dot(MRed, MRed) + lam2sq;
   GRed(0, 0) = coeff;
   GRedinv(0, 0) = double(1.0) / GRed(0, 0);
   cblas_dcopy(p, pr_G, 1, pr_MTMRed, 1);
@@ -409,7 +416,9 @@ vec activeSetS_arma(arma::mat& M, arma::vec& b, arma::mat& G,
         // BLAS UAiB = GRedinv * UB
         cblas_dsymv(CblasColMajor, CblasUpper, na, double(1.0), pr_GRedinv, L,
                     pr_UB, 1, double(), pr_UAiB, 1);
-        double USi = double(1.0) / (UC - cblas_ddot(na, pr_UB, 1, pr_UAiB, 1));
+        //double xxx = cblas_ddot(na, pr_UB, 1, pr_UAiB, 1);
+        double xxx = dot(UB, UAiB);
+        double USi = double(1.0) / (UC - xxx);
         // GRedinv (restricted) += USi * UAiB*UAiB
         // replace cblas_syr(CblasColMajor,CblasUpper,na,USi, pr_UAiB, 1,
         // pr_GRedinv, L);
